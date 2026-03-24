@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prospectos · Tepic</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--border:#2a2a3e;--accent:#7fff6e;--accent2:#6e9fff;--accent3:#ff6e9f;--accent4:#ffe06e;--text:#e8e8f0;--muted:#6b6b88;--radius:12px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:"DM Mono",monospace;min-height:100vh;overflow-x:hidden;}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(127,255,110,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(127,255,110,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.container{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:40px 24px;}
+header{margin-bottom:48px;animation:fadeDown .6s ease both;}
+.header-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:8px;}
+h1{font-family:"Syne",sans-serif;font-size:clamp(2rem,5vw,3.5rem);font-weight:800;line-height:1;letter-spacing:-.03em;}
+h1 span{color:var(--accent);}
+.subtitle{color:var(--muted);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;margin-top:8px;}
+.upload-btn{background:var(--surface2);border:1px dashed var(--border);color:var(--accent);font-family:"DM Mono",monospace;font-size:.75rem;padding:10px 20px;border-radius:var(--radius);cursor:pointer;transition:all .2s;white-space:nowrap;letter-spacing:.08em;}
+.upload-btn:hover{border-color:var(--accent);background:rgba(127,255,110,.05);}
+#fileInput{display:none;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:32px;animation:fadeUp .6s .1s ease both;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s;}
+.stat-card:hover{transform:translateY(-2px);border-color:var(--accent);}
+.stat-card::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;}
+.stat-card:nth-child(1)::after{background:var(--accent);}
+.stat-card:nth-child(2)::after{background:var(--accent2);}
+.stat-card:nth-child(3)::after{background:var(--accent3);}
+.stat-card:nth-child(4)::after{background:var(--accent4);}
+.stat-label{font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.stat-value{font-family:"Syne",sans-serif;font-size:2rem;font-weight:800;line-height:1;}
+.stat-card:nth-child(1) .stat-value{color:var(--accent);}
+.stat-card:nth-child(2) .stat-value{color:var(--accent2);}
+.stat-card:nth-child(3) .stat-value{color:var(--accent3);}
+.stat-card:nth-child(4) .stat-value{color:var(--accent4);}
+.chart-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:24px;animation:fadeUp .6s .2s ease both;}
+.section-title{font-family:"Syne",sans-serif;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:20px;}
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.bar-label{font-size:.72rem;width:130px;flex-shrink:0;text-transform:capitalize;color:var(--text);}
+.bar-track{flex:1;height:24px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width .8s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;padding-left:8px;font-size:.65rem;color:var(--bg);font-weight:500;}
+.bar-count{font-size:.72rem;color:var(--muted);width:30px;text-align:right;}
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;animation:fadeUp .6s .3s ease both;}
+.search-box{flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;color:var(--text);font-family:"DM Mono",monospace;font-size:.8rem;outline:none;transition:border-color .2s;}
+.search-box:focus{border-color:var(--accent);}
+.search-box::placeholder{color:var(--muted);}
+select{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;color:var(--text);font-family:"DM Mono",monospace;font-size:.8rem;outline:none;cursor:pointer;transition:border-color .2s;appearance:none;padding-right:32px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6b88' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+select:focus{border-color:var(--accent2);}
+.table-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;animation:fadeUp .6s .4s ease both;}
+.table-header-row{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+.result-count{font-size:.72rem;color:var(--muted);}
+.result-count span{color:var(--accent);font-weight:500;}
+.export-btn{background:rgba(127,255,110,.08);border:1px solid rgba(127,255,110,.2);color:var(--accent);font-family:"DM Mono",monospace;font-size:.7rem;padding:6px 14px;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:.06em;}
+.export-btn:hover{background:rgba(127,255,110,.15);}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:12px 16px;text-align:left;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:var(--surface2);cursor:pointer;user-select:none;white-space:nowrap;border-bottom:1px solid var(--border);transition:color .2s;}
+thead th:hover{color:var(--text);}
+thead th.sorted{color:var(--accent);}
+tbody tr{border-bottom:1px solid rgba(42,42,62,.5);transition:background .15s;}
+tbody tr:hover{background:rgba(127,255,110,.03);}
+tbody tr:last-child{border-bottom:none;}
+td{padding:12px 16px;font-size:.78rem;vertical-align:middle;}
+td.name{font-family:"Syne",sans-serif;font-weight:600;font-size:.85rem;max-width:200px;}
+.cat-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.65rem;letter-spacing:.08em;text-transform:capitalize;font-weight:500;white-space:nowrap;}
+.web-badge{display:inline-flex;align-items:center;gap:5px;font-size:.7rem;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+.web-badge.sin-web{background:rgba(255,110,159,.12);color:var(--accent3);border:1px solid rgba(255,110,159,.2);}
+.web-badge.redes{background:rgba(255,224,110,.1);color:var(--accent4);border:1px solid rgba(255,224,110,.2);}
+.rating{display:flex;align-items:center;gap:5px;font-size:.78rem;}
+.rating-dot{width:8px;height:8px;border-radius:50%;}
+.phone-link{color:var(--accent2);text-decoration:none;font-size:.75rem;}
+.phone-link:hover{text-decoration:underline;}
+.address-cell{color:var(--muted);font-size:.72rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-state .icon{font-size:2.5rem;margin-bottom:12px;opacity:.4;}
+.empty-state p{font-size:.8rem;letter-spacing:.08em;}
+.map-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:24px;animation:fadeUp .6s .5s ease both;}
+.map-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.map-title{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+.map-legend{display:flex;gap:16px;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:.65rem;color:var(--muted);}
+.legend-dot{width:10px;height:10px;border-radius:50%;}
+#map{width:100%;height:460px;}
+.overflow-x{overflow-x:auto;}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <div class="header-top">
+    <div>
+      <h1>Prospectos <span>·</span> Tepic</h1>
+      <p class="subtitle">Landing Page Leads &nbsp;·&nbsp; Google Maps Data &nbsp;·&nbsp; 150 negocios</p>
+    </div>
+    <label class="upload-btn" for="fileInput">⬆ Cargar nuevo CSV</label>
+    <input type="file" id="fileInput" accept=".csv">
+  </div>
+</header>
+
+<div class="stats-grid" id="statsGrid">
+  <div class="stat-card"><div class="stat-label">Total prospectos</div><div class="stat-value" id="statTotal">—</div></div>
+  <div class="stat-card"><div class="stat-label">Sin sitio web</div><div class="stat-value" id="statSinWeb">—</div></div>
+  <div class="stat-card"><div class="stat-label">Solo redes</div><div class="stat-value" id="statRedes">—</div></div>
+  <div class="stat-card"><div class="stat-label">Rating promedio</div><div class="stat-value" id="statRating">—</div></div>
+</div>
+
+<div class="chart-section">
+  <div class="section-title">Prospectos por categoría</div>
+  <div id="categoryChart"></div>
+</div>
+
+<div class="controls">
+  <input type="text" class="search-box" id="searchBox" placeholder="🔍  Buscar negocio o dirección...">
+  <select id="filterCat"><option value="">Todas las categorías</option></select>
+  <select id="filterWeb">
+    <option value="">Todos</option>
+    <option value="sin">Sin sitio web</option>
+    <option value="redes">Solo redes</option>
+  </select>
+  <select id="sortBy">
+    <option value="">Ordenar por...</option>
+    <option value="rating-desc">Rating ↓</option>
+    <option value="rating-asc">Rating ↑</option>
+    <option value="name-asc">Nombre A→Z</option>
+    <option value="name-desc">Nombre Z→A</option>
+  </select>
+</div>
+
+<div class="table-wrapper">
+  <div class="table-header-row">
+    <div class="result-count">Mostrando <span id="showCount">0</span> prospectos</div>
+    <button class="export-btn" onclick="exportCSV()">⬇ Exportar filtrado</button>
+  </div>
+  <div class="overflow-x">
+    <table id="prospectsTable">
+      <thead><tr>
+        <th onclick="toggleSort('name')">Negocio <span id="sort-name">↕</span></th>
+        <th>Categoría</th>
+        <th>Estado Web</th>
+        <th onclick="toggleSort('phone')">Teléfono</th>
+        <th onclick="toggleSort('rating')">Rating <span id="sort-rating">↕</span></th>
+        <th>Dirección</th>
+      </tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="map-section">
+  <div class="map-header">
+    <div class="map-title">Mapa de prospectos · Tepic, Nayarit</div>
+    <div class="map-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#ff6e9f"></div>Sin web</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ffe06e"></div>Solo redes</div>
+    </div>
+  </div>
+  <div id="map"></div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const RAW_DATA = [{"Negocio":"Yady Jiménez Salón De Belleza","Categoría":"salon de belleza","Teléfono":"311 104 6819","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Calle josefa Ortiz, C. Belisario Domínguez 56o, Santa Teresita, 63020 Tepic, Nay., Mexico"},{"Negocio":"Yaenva","Categoría":"salon de belleza","Teléfono":"311 743 1060","Web Actual":"https://www.facebook.com/CentroDeBellezaYaenva/","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Jose María mercado #73C, Col, San Antonio, 63150 Tepic, Nay., Mexico"},{"Negocio":"Gabriela Canales","Categoría":"salon de belleza","Teléfono":"311 143 1884","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Av Del Ejército 327, El Tecolote, 63135 Tepic, Nay., Mexico"},{"Negocio":"Xtilísima Salón","Categoría":"salon de belleza","Teléfono":"311 109 6419","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Calle Samaria 113, Hermosa Provincia, 63197 Tepic, Nay., Mexico"},{"Negocio":"RO Salón","Categoría":"salon de belleza","Teléfono":"311 169 6568","Web Actual":"https://www.facebook.com/salondebellezatepic/","Rating":"4.2","Ciudad":"Tepic, Nayarit","Dirección":"Avenida del Valle 146 A2 entre Nápoles y, Lisboa, Cd del Valle, 63157 Tepic, Nay., Mexico"},{"Negocio":"Innova Salón by Leonel Piedra","Categoría":"salon de belleza","Teléfono":"311 170 7116","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Av. Paseo de la Loma 153, Fray Junípero Serra, 63169 Tepic, Nay., Mexico"},{"Negocio":"Jody & Lina Ramos Studio Salón","Categoría":"salon de belleza","Teléfono":"311 120 2426","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Diamante 105, Valle de Matatipac, 63195 Tepic, Nay., Mexico"},{"Negocio":"ÓleHairStudio","Categoría":"salon de belleza","Teléfono":"311 133 0114","Web Actual":"Ninguna","Rating":"4.1","Ciudad":"Tepic, Nayarit","Dirección":"Tokio 44, Cd del Valle, 63157 Tepic, Nay., Mexico"},{"Negocio":"Lima Studio de Belleza","Categoría":"salon de belleza","Teléfono":"311 909 7459","Web Actual":"Ninguna","Rating":"4.4","Ciudad":"Tepic, Nayarit","Dirección":"José María Morelos Ote. 235, entre P. Sánchez y Padre Mejia, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Be! Belleza Y Estilo","Categoría":"salon de belleza","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Av Ignacio Allende Pte 191-INT 3, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Trendy Salon","Categoría":"salon de belleza","Teléfono":"311 456 2209","Web Actual":"Ninguna","Rating":"4.6","Ciudad":"Tepic, Nayarit","Dirección":"Santa Cecilia, 63089 Tepic, Nay., Mexico"},{"Negocio":"OC ESTILISTAS","Categoría":"salon de belleza","Teléfono":"311 163 2198","Web Actual":"https://www.facebook.com/RafaelGonzalezmaquillista/","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Génova 77a, Cd del Valle, 63157 Tepic, Nay., Mexico"},{"Negocio":"Estética Unisex Narú","Categoría":"salon de belleza","Teléfono":"311 147 4600","Web Actual":"Ninguna","Rating":"4.8","Ciudad":"Tepic, Nayarit","Dirección":"Javier Mina 58, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Estética unisex SOL SELENE SALÓN","Categoría":"salon de belleza","Teléfono":"311 184 9771","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Av. Universidad 152, Cd del Valle, 63157 Tepic, Nay., Mexico"},{"Negocio":"Queens Estética &Nails","Categoría":"salon de belleza","Teléfono":"311 214 5736","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Argentina 121, Los Fresnos Oriente, Los Fresnos, 63190 Tepic, Nay., Mexico"},{"Negocio":"Estetica Vida De Angel","Categoría":"salon de belleza","Teléfono":"311 109 2911","Web Actual":"Ninguna","Rating":"4.6","Ciudad":"Tepic, Nayarit","Dirección":"Av. México Nte. 843, El Mirador, 63038 Tepic, Nay., Mexico"},{"Negocio":"CR Beauty Studio","Categoría":"salon de belleza","Teléfono":"311 139 8292","Web Actual":"http://facebook.com/CRBeautyStudio","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Compostela 13-A, Morelos, 63160 Tepic, Nay., Mexico"},{"Negocio":"Pelo Estetica Profesional","Categoría":"salon de belleza","Teléfono":"311 233 3756","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Av del Valle 74 63157, Cd del Valle, 63157 Tepic, Nay., Mexico"},{"Negocio":"Heron Machuzzi Maquillador","Categoría":"salon de belleza","Teléfono":"311 141 2063","Web Actual":"https://m.facebook.com/HeronMachuzzi/","Rating":"4","Ciudad":"Tepic, Nayarit","Dirección":"Av. Ignacio Allende 379, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Hair studio","Categoría":"salon de belleza","Teléfono":"311 166 0848","Web Actual":"https://m.facebook.com/kiscelicamberosalon/","Rating":"4.3","Ciudad":"Tepic, Nayarit","Dirección":"63089, Ejido 893 esq, Copal, Santa Cecilia, 63089 Tepic, Nay., Mexico"},{"Negocio":"Pelo Estetica Profesional","Categoría":"peluqueria","Teléfono":"311 233 3756","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Av del Valle 74 63157, Cd del Valle, 63157 Tepic, Nay., Mexico"},{"Negocio":"Peluquería Willy","Categoría":"peluqueria","Teléfono":"311 254 8709","Web Actual":"Ninguna","Rating":"4.8","Ciudad":"Tepic, Nayarit","Dirección":"Carrillo Puerto 41, Morelos, 63160 Tepic, Nay., Mexico"},{"Negocio":"Peluquería D'Varón","Categoría":"peluqueria","Teléfono":"311 189 0368","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Xalisco 96, Valle de Matatipac, 63195 Tepic, Nay., Mexico"},{"Negocio":"Yaenva","Categoría":"peluqueria","Teléfono":"311 743 1060","Web Actual":"https://www.facebook.com/CentroDeBellezaYaenva/","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Jose María mercado #73C, Col, San Antonio, 63150 Tepic, Nay., Mexico"},{"Negocio":"Gabriela Canales","Categoría":"peluqueria","Teléfono":"311 143 1884","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Av Del Ejército 327, El Tecolote, 63135 Tepic, Nay., Mexico"},{"Negocio":"Yady Jiménez Salón De Belleza","Categoría":"peluqueria","Teléfono":"311 104 6819","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Calle josefa Ortiz, C. Belisario Domínguez 56o, Santa Teresita, 63020 Tepic, Nay., Mexico"},{"Negocio":"ÓleHairStudio","Categoría":"peluqueria","Teléfono":"311 133 0114","Web Actual":"Ninguna","Rating":"4.1","Ciudad":"Tepic, Nayarit","Dirección":"Tokio 44, Cd del Valle, 63157 Tepic, Nay., Mexico"},{"Negocio":"Juan Bernal Peluquería","Categoría":"peluqueria","Teléfono":"311 212 8750","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Morelia 379, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Xtilísima Salón","Categoría":"peluqueria","Teléfono":"311 109 6419","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Calle Samaria 113, Hermosa Provincia, 63197 Tepic, Nay., Mexico"},{"Negocio":"OC ESTILISTAS","Categoría":"peluqueria","Teléfono":"311 163 2198","Web Actual":"https://www.facebook.com/RafaelGonzalezmaquillista/","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Génova 77a, Cd del Valle, 63157 Tepic, Nay., Mexico"},{"Negocio":"Stay Classy Barber Shop","Categoría":"peluqueria","Teléfono":"311 113 3156","Web Actual":"http://www.facebook.com/barbershop","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"C. Constitución #125-b, ZONA A, Mololoa, 63050 Tepic, Nay., Mexico"},{"Negocio":"Yazz Barbería","Categoría":"peluqueria","Teléfono":"311 104 6472","Web Actual":"https://m.facebook.com/yazminberrinchez","Rating":"4.8","Ciudad":"Tepic, Nayarit","Dirección":"C. Brasil 170C, Los Fresnos Oriente, Los Fresnos, 63190 Tepic, Nay., Mexico"},{"Negocio":"Lobo Barbershop & Spa","Categoría":"peluqueria","Teléfono":"311 169 2114","Web Actual":"https://www.facebook.com/LoboBarbershopSpa","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Venecia 11, Cd del Valle, 63157 Tepic, Nay., Mexico"},{"Negocio":"Master Of Cuts Barbería","Categoría":"peluqueria","Teléfono":"311 376 5576","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Roma 199, entre Atenas y Portugal, Cd del Valle, 63157 Tepic, Nay., Mexico"},{"Negocio":"Estética unisex \"CHEPI\"","Categoría":"peluqueria","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Av Zapopan 31, Mololoa, 63050 Tepic, Nay., Mexico"},{"Negocio":"Salon Hair Style","Categoría":"peluqueria","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Amado Nervo Pte. 459, Heriberto Casas, 63080 Tepic, Nay., Mexico"},{"Negocio":"Estética Karisma","Categoría":"peluqueria","Teléfono":"311 134 8862","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Leyes de Reforma 652, Lázaro Cárdenas, 63190 Tepic, Nay., Mexico"},{"Negocio":"Omar Lafayette Peluquería y maquillaje","Categoría":"peluqueria","Teléfono":"311 121 0364","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Parque Ecológico 17, Villas del Parque, 63173 Tepic, Nay., Mexico"},{"Negocio":"Papelería Mso","Categoría":"papeleria","Teléfono":"311 156 6191","Web Actual":"http://facebook.com/Papeleriamso","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"C. Hortencia 59, Jacarandas, 63173 Tepic, Nay., Mexico"},{"Negocio":"Papelería Copiado Madero","Categoría":"papeleria","Teléfono":"311 262 1948","Web Actual":"Ninguna","Rating":"4.5","Ciudad":"Tepic, Nayarit","Dirección":"Av. Francisco I. Madero 363, Colonia, 63039 Tepic, Nay., Mexico"},{"Negocio":"Papeleria Saji","Categoría":"papeleria","Teléfono":"311 315 1000","Web Actual":"https://www.facebook.com/Papeleriasaji.tpc/","Rating":"4","Ciudad":"Tepic, Nayarit","Dirección":"Xalisco-Tepic 171, Los Fresnos Oriente, Los Fresnos, 63190 Tepic, Nay., Mexico"},{"Negocio":"Papelería el Contador","Categoría":"papeleria","Teléfono":"311 212 1447","Web Actual":"http://www.facebook.com/papeleriaelcontador","Rating":"4.3","Ciudad":"Tepic, Nayarit","Dirección":"Veracruz Sur 58 nte, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Papelería Any gs","Categoría":"papeleria","Teléfono":"311 123 5902","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"63160, Morelos, 63160 Tepic, Nay., Mexico"},{"Negocio":"Papelería Arcoiris GG","Categoría":"papeleria","Teléfono":"311 148 8254","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Calle Albert R Parson. 13, col. 21 de mayo, Es una papelería que se llama Arcoiris GG, y/o, Villas del Parque, 63173 Tepic, Nay., Mexico"},{"Negocio":"Ciber y papelería Sagitario","Categoría":"papeleria","Teléfono":"311 799 9252","Web Actual":"Ninguna","Rating":"4.6","Ciudad":"Tepic, Nayarit","Dirección":"Palomas 193, Puente de San Cayetano, 63194 Tepic, Nay., Mexico"},{"Negocio":"Centro de servicios y papelería Lucoba","Categoría":"papeleria","Teléfono":"311 159 5672","Web Actual":"https://www.facebook.com/cyberlucoba","Rating":"4.8","Ciudad":"Tepic, Nayarit","Dirección":"Buenos Aires 113, Cd del Valle, 63157 Tepic, Nay., Mexico"},{"Negocio":"Papelería Páez","Categoría":"papeleria","Teléfono":"56 4997 0771","Web Actual":"Ninguna","Rating":"4.6","Ciudad":"Tepic, Nayarit","Dirección":"C. Villa de la Torre 345, Villas del Roble, 63173 Tepic, Nay., Mexico"},{"Negocio":"Papelería Los Reyes","Categoría":"papeleria","Teléfono":"311 374 8116","Web Actual":"Ninguna","Rating":"4.8","Ciudad":"Tepic, Nayarit","Dirección":"Malinche #6 Colonia Antonio Echeverria Dominguez, entre Indira Gandhi y Princesa Diana de Gales, 63173 Tepic, Nay., Mexico"},{"Negocio":"Paos papelería","Categoría":"papeleria","Teléfono":"311 395 4288","Web Actual":"https://www.facebook.com/PAOS-Papeler%C3%ADa-107132814478750/","Rating":"4.5","Ciudad":"Tepic, Nayarit","Dirección":"63084, Indio Mariano 1527, Ing Aguayo, 63084 Tepic, Nay., Mexico"},{"Negocio":"Papelería Gemma","Categoría":"papeleria","Teléfono":"311 260 6721","Web Actual":"Ninguna","Rating":"N/A","Ciudad":"Tepic, Nayarit","Dirección":"Guerrero 116A, Emilio M. González, 63038 Tepic, Nay., Mexico"},{"Negocio":"Papelería El Cubo","Categoría":"papeleria","Teléfono":"311 163 5545","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Construcción 599C, Santa Teresita, 63020 Tepic, Nay., Mexico"},{"Negocio":"Papelería y Copiado Madero Castilla","Categoría":"papeleria","Teléfono":"311 249 3679","Web Actual":"https://www.facebook.com/PC-Madero-Castilla-104646185582244","Rating":"4.5","Ciudad":"Tepic, Nayarit","Dirección":"C. Fernando Espinoza, Castilla, 63196 Tepic, Nay., Mexico"},{"Negocio":"Papelería ANGUIANO","Categoría":"papeleria","Teléfono":"311 118 0718","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Lindavista, 63059 Tepic, Nay., Mexico"},{"Negocio":"Ferretería Metalye","Categoría":"ferreteria","Teléfono":"311 210 3752","Web Actual":"https://www.facebook.com/ferreteriametalye/?locale=es_LA","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Autop. Guadalajara - Tepic KM3 #849 -A, COL. 1 DE MAYO, 63783 Xalisco, Nay., Mexico"},{"Negocio":"Ferretería M.M.M.","Categoría":"ferreteria","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Calle Churubusco Ote., Colonia, 63039 Tepic, Nay., Mexico"},{"Negocio":"Ferretería Rey Nayar","Categoría":"ferreteria","Teléfono":"311 100 0135","Web Actual":"Ninguna","Rating":"4.3","Ciudad":"Tepic, Nayarit","Dirección":"Rey Nayar 106, Burócrata Federal, 63156 Tepic, Nay., Mexico"},{"Negocio":"DISTRIBUIDOR NAYARIT","Categoría":"ferreteria","Teléfono":"311 354 5019","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Av. México Nte. 4850, Jardines del Valle Amp 1ra Secc, 63035 Tepic, Nay., Mexico"},{"Negocio":"Ferretería Don Guty","Categoría":"ferreteria","Teléfono":"311 110 1078","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Jordan Road 330, Hermosa Provincia, 63197 Tepic, Nay., Mexico"},{"Negocio":"Ferroelectrico El Socio","Categoría":"ferreteria","Teléfono":"311 214 4013","Web Actual":"Ninguna","Rating":"4.5","Ciudad":"Tepic, Nayarit","Dirección":"C. Nayarit 309, El Tecolote, 63135 Tepic, Nay., Mexico"},{"Negocio":"Ferretería Aguilar","Categoría":"ferreteria","Teléfono":"311 150 1101","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Los Arcos 1082-4, Los Arcos, 63035 Tepic, Nay., Mexico"},{"Negocio":"Ferretería Indeco","Categoría":"ferreteria","Teléfono":"311 212 9792","Web Actual":"Ninguna","Rating":"4","Ciudad":"Tepic, Nayarit","Dirección":"Av. Ricardo Flores Magon 453, Indeco Plan de Guadalupe, 63022 Tepic, Nay., Mexico"},{"Negocio":"Ferretería Zapopan","Categoría":"ferreteria","Teléfono":"311 124 8414","Web Actual":"Ninguna","Rating":"4.3","Ciudad":"Tepic, Nayarit","Dirección":"Netzahualcóyotl 50, Lomas de Cortéz, 63059 Tepic, Nay., Mexico"},{"Negocio":"Instalaciones Salazar","Categoría":"ferreteria","Teléfono":"311 217 2910","Web Actual":"Ninguna","Rating":"3.3","Ciudad":"Tepic, Nayarit","Dirección":"Av Proyecto 111, Mololoa, 63050 Tepic, Nay., Mexico"},{"Negocio":"Ferretería y Tlapalería Lindavista","Categoría":"ferreteria","Teléfono":"311 257 4130","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"C. Bucerias 119, Lomas de Lindavista, 63110 Tepic, Nay., Mexico"},{"Negocio":"Sufacen","Categoría":"farmacia","Teléfono":"311 213 4000","Web Actual":"Ninguna","Rating":"3.8","Ciudad":"Tepic, Nayarit","Dirección":"Av. Francisco I. Madero 1, San José, 63030 Tepic, Nay., Mexico"},{"Negocio":"Tortillería Morelos","Categoría":"tortilleria","Teléfono":"311 213 1228","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Tuxpan 136, Morelos, 63000 Tepic, Nay., Mexico"},{"Negocio":"Tortillería Los Sauces","Categoría":"tortilleria","Teléfono":"311 224 6501","Web Actual":"Ninguna","Rating":"4.5","Ciudad":"Tepic, Nayarit","Dirección":"Juanacatlán 21, Los Sauces Infonavit, Los Sauces, 63197 Tepic, Nay., Mexico"},{"Negocio":"TORTILLERIA MI FAVORITA","Categoría":"tortilleria","Teléfono":"311 544 9223","Web Actual":"Ninguna","Rating":"4.6","Ciudad":"Tepic, Nayarit","Dirección":"Tlalpan 109, Ing Aguayo, 63010 Tepic, Nay., Mexico"},{"Negocio":"Imperial","Categoría":"tortilleria","Teléfono":"311 217 0827","Web Actual":"Ninguna","Rating":"4.4","Ciudad":"Tepic, Nayarit","Dirección":"Cam. a los Metates 58, El Parián, 63050 Tepic, Nay., Mexico"},{"Negocio":"Tortillería Las Virginias","Categoría":"tortilleria","Teléfono":"311 200 5685","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Sinaloa 64, México, 63170 Tepic, Nay., Mexico"},{"Negocio":"Tortillería La Tortilla Feliz","Categoría":"tortilleria","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"C. 12 de Octubre 365, Menchaca, 63150 Tepic, Nay., Mexico"},{"Negocio":"Senkalli Tortillería Suc Bravo","Categoría":"tortilleria","Teléfono":"311 214 7953","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Calle Nicolás Bravo Ote. 34, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Tortillería El Rodeo","Categoría":"tortilleria","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Av Ignacio Allende Pte 377, El Rodeo, 63060 Tepic, Nay., Mexico"},{"Negocio":"Tortilleria San Juan","Categoría":"tortilleria","Teléfono":"311 132 5989","Web Actual":"Ninguna","Rating":"4.3","Ciudad":"Tepic, Nayarit","Dirección":"Esteban Baca Calderón 23, El Tecolote, 63160 Tepic, Nay., Mexico"},{"Negocio":"Tortillería Nuestra Señora de la Soledad","Categoría":"tortilleria","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"3.7","Ciudad":"Tepic, Nayarit","Dirección":"Jordan Road, Hermosa Provincia, 63156 Tepic, Nay., Mexico"},{"Negocio":"Tortillas de Harina Trinitis S.A. de C.V.","Categoría":"tortilleria","Teléfono":"311 212 9514","Web Actual":"Ninguna","Rating":"4.8","Ciudad":"Tepic, Nayarit","Dirección":"C. 6 No.34, El Rodeo, 63060 Tepic, Nay., Mexico"},{"Negocio":"Tortillería La Nayarita","Categoría":"tortilleria","Teléfono":"311 212 3914","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Ejido & Calle Zapata Poniente, Heriberto Casas, 63080 Tepic, Nay., Mexico"},{"Negocio":"Tortilleria Y Molino \"El Buen Maiz\"","Categoría":"tortilleria","Teléfono":"311 145 2135","Web Actual":"Ninguna","Rating":"4.4","Ciudad":"Tepic, Nayarit","Dirección":"Jacarandas 8, Los Sauces, INFONAVIT los Sauces, 63195 Tepic, Nay., Mexico"},{"Negocio":"Tortillería Santa Teresa","Categoría":"tortilleria","Teléfono":"311 169 9501","Web Actual":"Ninguna","Rating":"4.2","Ciudad":"Tepic, Nayarit","Dirección":"Sebastián Lerdo de Tejada Pte. 331, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Tortillería La Reyna","Categoría":"tortilleria","Teléfono":"311 217 9662","Web Actual":"Ninguna","Rating":"4.6","Ciudad":"Tepic, Nayarit","Dirección":"Amado Nervo Pte. 131, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Tortillería Santo Toribio","Categoría":"tortilleria","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Prieto Crispín, 63174 Tepic, Nayarit, Mexico"},{"Negocio":"Tortillería Azteca","Categoría":"tortilleria","Teléfono":"311 217 9231","Web Actual":"Ninguna","Rating":"4.1","Ciudad":"Tepic, Nayarit","Dirección":"Av. Francisco I. Madero 302, Magisterial, 63000 Tepic, Nay., Mexico"},{"Negocio":"Tortillería Revolución","Categoría":"tortilleria","Teléfono":"311 260 5868","Web Actual":"Ninguna","Rating":"4","Ciudad":"Tepic, Nayarit","Dirección":"Av. Revolución 123, Morelos, 63160 Tepic, Nay., Mexico"},{"Negocio":"Tortillas De Harina México Suc. Gobernadores","Categoría":"tortilleria","Teléfono":"311 232 8525","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"C. Emilio Manuel González 5, Gobernadores, 36175 Tepic, Nay., Mexico"},{"Negocio":"Carnicería Morelos","Categoría":"carniceria","Teléfono":"2132860","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Calle Chacala & Santiago, Morelos, 63160 Tepic, Nay., Mexico"},{"Negocio":"Carnicería \"Los Derechos\"","Categoría":"carniceria","Teléfono":"311 129 0759","Web Actual":"Ninguna","Rating":"4.3","Ciudad":"Tepic, Nayarit","Dirección":"Valle de Matatipac, 63195 Tepic, Nayarit, Mexico"},{"Negocio":"El Vaquerito","Categoría":"carniceria","Teléfono":"311 181 0694","Web Actual":"https://www.facebook.com/profile.php?id=100085483363822&mibextid=ZbWKwL","Rating":"4.3","Ciudad":"Tepic, Nayarit","Dirección":"Juan Diego, 12 de Diciembre, 63170 Tepic, Nay., Mexico"},{"Negocio":"Carnicerias Hernandez","Categoría":"carniceria","Teléfono":"311 216 0371","Web Actual":"Ninguna","Rating":"4.4","Ciudad":"Tepic, Nayarit","Dirección":"Pedraza 553, Heriberto Casas, 63020 Tepic, Nay., Mexico"},{"Negocio":"La Carnicería De Especialidades (anteriormente Eclipse)","Categoría":"carniceria","Teléfono":"311 256 3507","Web Actual":"https://www.facebook.com/LaCarniceriadeEspecialidades/","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Calle Jose María Morelos, C. Manuel Lozada 934-A Esquina, Adolfo López Mateos, 63070 Tepic, Nay., Mexico"},{"Negocio":"Carniceria la Tapatía","Categoría":"carniceria","Teléfono":"311 217 6807","Web Actual":"Ninguna","Rating":"4.7","Ciudad":"Tepic, Nayarit","Dirección":"Solidaridad 76, Amp Tierra y Libertad, 63178 Tepic, Nay., Mexico"},{"Negocio":"Carnicería \"Ayutla\"","Categoría":"carniceria","Teléfono":"311 456 1187","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Cardo, Jacarandas, 63173 Tepic, Nay., Mexico"},{"Negocio":"Carnicería Mi ranchito","Categoría":"carniceria","Teléfono":"311 249 0177","Web Actual":"Ninguna","Rating":"4.2","Ciudad":"Tepic, Nayarit","Dirección":"Granada 15, Comerciantes, 63175 Tepic, Nay., Mexico"},{"Negocio":"Carnicería San Antonio Tepic","Categoría":"carniceria","Teléfono":"311 218 5880","Web Actual":"https://www.facebook.com/CarniceriaSanAntonioTepicNayarit?mibextid=ZbWKwL","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Churubusco 197a, esquina, Calle Ignacio Manuel Altamirano, Chapultepec, 63030 Tepic, Nay., Mexico"},{"Negocio":"Carnicería Tierra y Libertad","Categoría":"carniceria","Teléfono":"311 212 0964","Web Actual":"Ninguna","Rating":"4.6","Ciudad":"Tepic, Nayarit","Dirección":"21 de Febrero 69, Tierra y Libertad, 63178 Tepic, Nay., Mexico"},{"Negocio":"Comercializadora Aguillón","Categoría":"carniceria","Teléfono":"311 212 8487","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"C. Praxedis Guerrero 448, Santa Teresita, 63020 Tepic, Nay., Mexico"},{"Negocio":"La regia Tepic cortes finos del norte","Categoría":"carniceria","Teléfono":"311 139 4267","Web Actual":"https://m.facebook.com/LaREGIATEPIC/","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"A, Caoba 13-A, Félix Peña, 63185 Tepic, Nay., Mexico"},{"Negocio":"Carnicería Asador los compadres","Categoría":"carniceria","Teléfono":"311 147 6607","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Cam. Viejo a La Cantera 13, Molinos del Rey, 63173 Tepic, Nay., Mexico"},{"Negocio":"Carnicería Berkis","Categoría":"carniceria","Teléfono":"311 212 4358","Web Actual":"https://www.facebook.com/share/9KKcDDJFyKJaAyj9/?mibextid=wwXIfr","Rating":"4.5","Ciudad":"Tepic, Nayarit","Dirección":"Construcción 482, Santa Teresita, 63020 Tepic, Nay., Mexico"},{"Negocio":"Lavandería Facilavo","Categoría":"lavanderia","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"C. Francisco Márquez 16, Lomas de la Cruz, 63030 Tepic, Nay., Mexico"},{"Negocio":"Express Laundromat","Categoría":"lavanderia","Teléfono":"311 147 6630","Web Actual":"Ninguna","Rating":"3.6","Ciudad":"Tepic, Nayarit","Dirección":"Av Prisciliano Sanchez 32, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Lavanderia Y Planchaduria \"La Cruz\"","Categoría":"lavanderia","Teléfono":"311 250 7064","Web Actual":"Ninguna","Rating":"4.8","Ciudad":"Tepic, Nayarit","Dirección":"C. José María Mercado 26, Caja de Agua, 63158 Tepic, Nay., Mexico"},{"Negocio":"Lavanderia El mirador","Categoría":"lavanderia","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Ignacio Zaragoza 25, El Mirador, 63038 Tepic, Nay., Mexico"},{"Negocio":"Moon Laundromat Luna Lavanderia","Categoría":"lavanderia","Teléfono":"311 133 2179","Web Actual":"Ninguna","Rating":"4.3","Ciudad":"Tepic, Nayarit","Dirección":"C. Marcos Partida 42, Menchaca, 63150 Tepic, Nay., Mexico"},{"Negocio":"Los Secatecas Laundromat And Dry Cleaner Lavandería y Tintorería Luz Zacatecas","Categoría":"lavanderia","Teléfono":"311 213 7858","Web Actual":"Ninguna","Rating":"4","Ciudad":"Tepic, Nayarit","Dirección":"C. Río Suchiate 305, Lázaro Cárdenas, 63190 Tepic, Nay., Mexico"},{"Negocio":"Lavandería Medusa","Categoría":"lavanderia","Teléfono":"311 218 9704","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Medusa 51, Las Brisas Rodeo de la Punta, 63110 Tepic, Nay., Mexico"},{"Negocio":"Lavanderia LAVANDA","Categoría":"lavanderia","Teléfono":"311 165 6832","Web Actual":"Ninguna","Rating":"N/A","Ciudad":"Tepic, Nayarit","Dirección":"39, Valle Verde Conalep, 63037 Tepic, Nay., Mexico"},{"Negocio":"Express Laundromat","Categoría":"lavanderia","Teléfono":"311 342 8551","Web Actual":"Ninguna","Rating":"1","Ciudad":"Tepic, Nayarit","Dirección":"63038, Naranjos 4940, El Paraíso, 63038 Tepic, Nay., Mexico"},{"Negocio":"Lavandería el Quijote","Categoría":"lavanderia","Teléfono":"311 165 4885","Web Actual":"https://www.facebook.com/quijotetintoreria?mibextid=ZbWKwL","Rating":"4.5","Ciudad":"Tepic, Nayarit","Dirección":"Sebastián Lerdo de Tejada Pte. 290, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Tintorería México","Categoría":"lavanderia","Teléfono":"311 212 9993","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"C. 20 de Noviembre 121, ZONA A, Mololoa, 63050 Tepic, Nay., Mexico"},{"Negocio":"Lavandería","Categoría":"lavanderia","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Zicacalco, Santa Cecilia, 63089 Tepic, Nay., Mexico"},{"Negocio":"Lavandería Lindavista","Categoría":"lavanderia","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Río Sena, Lindavista, 63110 Tepic, Nay., Mexico"},{"Negocio":"Lavanderia Easy Clean","Categoría":"lavanderia","Teléfono":"311 211 4254","Web Actual":"Ninguna","Rating":"3.8","Ciudad":"Tepic, Nayarit","Dirección":"Av. Lagos del Country LB, Lagos del Country, 63175 Tepic, Nay., Mexico"},{"Negocio":"Lavanderia La Laguna","Categoría":"lavanderia","Teléfono":"311 257 2638","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Teodulo Chacón 21, La Lomita, 63039 Tepic, Nay., Mexico"},{"Negocio":"Lavandería La burbuja feliz","Categoría":"lavanderia","Teléfono":"311 212 4792","Web Actual":"https://www.facebook.com/lavanderialaburbujafeliz/","Rating":"3.1","Ciudad":"Tepic, Nayarit","Dirección":"C. Querétaro 428-nte, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Lavandería Madero","Categoría":"lavanderia","Teléfono":"311 195 5529","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Av. Francisco I. Madero 364, Cuitláhuac, 63030 Tepic, Nay., Mexico"},{"Negocio":"Lavanderia Brisas","Categoría":"lavanderia","Teléfono":"311 160 3261","Web Actual":"Ninguna","Rating":"4.9","Ciudad":"Tepic, Nayarit","Dirección":"Las Brisas 42, Rodeo de la Punta, 63117 Tepic, Nay., Mexico"},{"Negocio":"Plomero Electricista - Soluciones a tu hogar","Categoría":"plomero","Teléfono":"311 375 0898","Web Actual":"https://www.facebook.com/solucionesatuhogar1","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Del Pozo de Agua 10, Moctezuma, 63180 Tepic, Nay., Mexico"},{"Negocio":"Inova Multiservicios fontanero y electricista","Categoría":"plomero","Teléfono":"311 196 6160","Web Actual":"https://www.facebook.com/Fontanero-y-Electricista-garcia-112146986972205/","Rating":"4.4","Ciudad":"Tepic, Nayarit","Dirección":"C. Río Suchiate #270 Col, 15 de Mayo, 63190 Tepic, Nay., Mexico"},{"Negocio":"Multiservicios Ricardo's","Categoría":"plomero","Teléfono":"311 148 4004","Web Actual":"Ninguna","Rating":"2.9","Ciudad":"Tepic, Nayarit","Dirección":"Av. Magnolia Sur 48, Villas del Roble, 63173 Tepic, Nay., Mexico"},{"Negocio":"Casa del Plomero de Nayarit","Categoría":"plomero","Teléfono":"311 275 1053","Web Actual":"Ninguna","Rating":"N/A","Ciudad":"Tepic, Nayarit","Dirección":"Av. Guadalupe Victoria, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Esparza Multiservicios","Categoría":"plomero","Teléfono":"311 137 0795","Web Actual":"https://www.facebook.com/esparzatpc/","Rating":"3","Ciudad":"Tepic, Nayarit","Dirección":"C. Jesús María 80, Morelos, 63160 Tepic, Nay., Mexico"},{"Negocio":"INSTALA: Hardware store at Castilla Suburb","Categoría":"plomero","Teléfono":"311 129 2106","Web Actual":"https://www.facebook.com/Ferreinstala","Rating":"4.2","Ciudad":"Tepic, Nayarit","Dirección":"Nay, av. Sauce 175-A, Antiguo Aeropuerto, Los Sauces, 63196 Tepic, Nay., Mexico"},{"Negocio":"AXRA Solución en Mantenimiento","Categoría":"plomero","Teléfono":"311 876 1938","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Atlantidad, tres cuadras y media de la entrada, Insurgentes 188-A, Nayarabastos, 63193 Tepic, Nay., Mexico"},{"Negocio":"Multiservicios J&C","Categoría":"plomero","Teléfono":"311 428 2979","Web Actual":"https://l.facebook.com/l.php?u=https%3A%2F%2Fmultiservices-jc.negocio.site%2F%3Futm_source%3Dgmb%26utm_medium%3Dreferral%26fbclid%3DIwZXh0bgNhZW0CMTAAYnJpZBExbFg0OEE2ckt5cjdmclNpWQEeqQ0yMxt94DvTt1lMdPVTGR7JnAxcmGwlajDUz3lvTL0O0J2os0_aLH1QbDg_aem_Z_VUTdvmchY5MOAB_AWb8A&h=AT2EbErkY0J4KD4ZdrKu6apA8gxs_PQutr0FbY2Sk4ssSTDQtF2VEFwyeiBQyOjittNPw8gNPzp0s1lmoD4QtNN-TU3IOBCsLjUsfHtg7EUbXG9-Ui1xXR_00E6SRYzvNFImBjSIRaZn9KqpA1vAsw","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Turquesa 134, Villas de la Cantera, 63173 Tepic, Nay., Mexico"},{"Negocio":"Electricistas","Categoría":"electricista","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"N/A","Ciudad":"Tepic, Nayarit","Dirección":"Electricistas, Tepic, Nay., Mexico"},{"Negocio":"Carpintería Olivas","Categoría":"carpintero","Teléfono":"311 349 0349","Web Actual":"https://m.facebook.com/CarpinteriaOlivasTepic","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Argentina 259-A, Moctezuma, 63180 Tepic, Nay., Mexico"},{"Negocio":"Carpintería de Nayarit","Categoría":"carpintero","Teléfono":"311 117 3443","Web Actual":"https://www.facebook.com/capinteriadenayarit","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Av del Valle 38, Cd del Valle, 63157 Tepic, Nay., Mexico"},{"Negocio":"Cmi carpintería","Categoría":"carpintero","Teléfono":"311 145 2491","Web Actual":"Ninguna","Rating":"1","Ciudad":"Tepic, Nayarit","Dirección":"C. V.Carranza 674-B, Ojo de Agua, 63023 Tepic, Nay., Mexico"},{"Negocio":"Carpintería lagonz","Categoría":"carpintero","Teléfono":"311 192 5526","Web Actual":"Ninguna","Rating":"N/A","Ciudad":"Tepic, Nayarit","Dirección":"unidad deportiva y Zicacalco 5, Indio Mariano entre calles, Acayapan, 63084 Tepic, Nay., Mexico"},{"Negocio":"Carpinteria Sanchez","Categoría":"carpintero","Teléfono":"311 120 7548","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Cl. Ures 20, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Carpinteria Promueble \"Navarrete\"","Categoría":"carpintero","Teléfono":"2138610","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"63190, Michoacán 25, Lázaro Cárdenas, 63190 Tepic, Nay., Mexico"},{"Negocio":"Carpinteria Hermanos Gómez","Categoría":"carpintero","Teléfono":"311 162 5839","Web Actual":"Ninguna","Rating":"N/A","Ciudad":"Tepic, Nayarit","Dirección":"Argentina 144, Argentina 146, Moctezuma, 63180 Tepic, Nay., Mexico"},{"Negocio":"Restauración De Muebles Y Carpintería Elugo","Categoría":"carpintero","Teléfono":"311 124 7908","Web Actual":"Ninguna","Rating":"N/A","Ciudad":"Tepic, Nayarit","Dirección":"Sierra de San Juan 11, Jardines de la Cruz, 63168 Tepic, Nay., Mexico"},{"Negocio":"Carpintería y diseño Tepic","Categoría":"carpintero","Teléfono":"311 268 1146","Web Actual":"Ninguna","Rating":"2.3","Ciudad":"Tepic, Nayarit","Dirección":"Parque Ecológico, 63175 Tepic, Nayarit, Mexico"},{"Negocio":"Servicios Profesionales de Carpinteria","Categoría":"carpintero","Teléfono":"311 130 1036","Web Actual":"Ninguna","Rating":"4","Ciudad":"Tepic, Nayarit","Dirección":"Calle, Los Metates #30, El Parián, 63050 Tepic, Nay., Mexico"},{"Negocio":"Carpintería CR","Categoría":"carpintero","Teléfono":"311 102 7110","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Av Proyecto 135-A, Mololoa, 63050 Tepic, Nay., Mexico"},{"Negocio":"Carpinteria Osuna","Categoría":"carpintero","Teléfono":"311 137 6339","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Emiliano Zapata, 63070 Tepic, Nayarit, Mexico"},{"Negocio":"Carpinteria Olivas","Categoría":"carpintero","Teléfono":"311 256 5228","Web Actual":"Ninguna","Rating":"N/A","Ciudad":"Tepic, Nayarit","Dirección":"Oaxaca Sur 9, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Carpintería \"Pulido\"","Categoría":"carpintero","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"N/A","Ciudad":"Tepic, Nayarit","Dirección":"Loma del Punto 161, Loma Hermosa, 63019 Tepic, Nay., Mexico"},{"Negocio":"Torres El Pintor","Categoría":"pintor","Teléfono":"311 203 2404","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"C. Diana la Cazadora 214, Miguel Hidalgo, 63193 Tepic, Nay., Mexico"},{"Negocio":"La casa del Pintor Suc. Centro Berel","Categoría":"pintor","Teléfono":"311 212 4761","Web Actual":"Ninguna","Rating":"4.5","Ciudad":"Tepic, Nayarit","Dirección":"113 PTE, entre PUEBLA Y DURANGO, AMADO NERO, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Taller de Dibujo y Pintura Tepic","Categoría":"pintor","Teléfono":"311 145 9032","Web Actual":"https://www.facebook.com/tallerdedibujoypinturatepic","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"Calle de Edificio Telmex, Colima 257, San Antonio, 63159 Tepic, Nay., Mexico"},{"Negocio":"Pinturas Oslo","Categoría":"pintor","Teléfono":"311 124 5957","Web Actual":"https://es-la.facebook.com/pinturasoslo/","Rating":"4.6","Ciudad":"Tepic, Nayarit","Dirección":"Rey Nayar 122-c, Aviación, 63190 Tepic, Nay., Mexico"},{"Negocio":"Pinturas Sayer lack Tepic","Categoría":"pintor","Teléfono":"311 216 8600","Web Actual":"https://www.facebook.com/pinturasayer?mibextid=LQQJ4d","Rating":"4.5","Ciudad":"Tepic, Nayarit","Dirección":"Av Ignacio Allende Pte 350, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Tienda De Arte Grafisch","Categoría":"pintor","Teléfono":"311 116 6066","Web Actual":"Ninguna","Rating":"4.3","Ciudad":"Tepic, Nayarit","Dirección":"C. Puebla 48, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Multiservicios Lam Y Cia","Categoría":"pintor","Teléfono":"311 129 1919","Web Actual":"Ninguna","Rating":"1","Ciudad":"Tepic, Nayarit","Dirección":"C. Francisco Ignacio Madero 3, El Faisán 1, 63194 Tepic, Nay., Mexico"},{"Negocio":"Todo Para El Pintor","Categoría":"pintor","Teléfono":"No disponible","Web Actual":"Ninguna","Rating":"N/A","Ciudad":"Tepic, Nayarit","Dirección":"San Antonio, 63159 Tepic, Nayarit, Mexico"},{"Negocio":"Pinturas Lober","Categoría":"pintor","Teléfono":"311 212 2052","Web Actual":"Ninguna","Rating":"4.6","Ciudad":"Tepic, Nayarit","Dirección":"C. Zapata Pte. 136, Centro, 63000 Tepic, Nay., Mexico"},{"Negocio":"Pinturas Ipesa Tepic","Categoría":"pintor","Teléfono":"311 243 3464","Web Actual":"Ninguna","Rating":"5","Ciudad":"Tepic, Nayarit","Dirección":"La cantera, Av Aguamilpa 1021, Villas de la Cantera, 63173 Tepic, Nay., Mexico"},{"Negocio":"Pinturas Lober","Categoría":"pintor","Teléfono":"311 217 6227","Web Actual":"Ninguna","Rating":"4.5","Ciudad":"Tepic, Nayarit","Dirección":"Av. México Nte. 639, San José, 63030 Tepic, Nay., Mexico"}];
+
+const CAT_COLORS = {
+  "salon de belleza":"#ff6eb4","peluqueria":"#c46eff","papeleria":"#6e9fff",
+  "ferreteria":"#ffe06e","farmacia":"#6effda","tortilleria":"#ff9f6e",
+  "carniceria":"#ff6e6e","lavanderia":"#7fff6e","plomero":"#6eb4ff",
+  "electricista":"#fff06e","carpintero":"#d4a574","pintor":"#ff8c6e"
+};
+
+function getCatColor(cat){
+  const c=(cat||"").toLowerCase();
+  for(const[k,v] of Object.entries(CAT_COLORS)){if(c.includes(k))return v;}
+  return "#a0a0c0";
+}
+
+function getWebStatus(row){
+  const w=(row["Web Actual"]||"").toLowerCase();
+  if(!w||w==="ninguna"||w==="")return "sin";
+  if(["facebook.com","instagram.com","t.me","wa.link"].some(r=>w.includes(r)))return "redes";
+  return "web";
+}
+
+function normalizeRow(row){
+  return{
+    name:row["Negocio"]||"",
+    category:row["Categoría"]||row["Categoria"]||"",
+    phone:row["Teléfono"]||row["Telefono"]||"No disponible",
+    web:row["Web Actual"]||"",
+    rating:parseFloat(row["Rating"])||null,
+    city:row["Ciudad"]||"",
+    address:row["Dirección"]||row["Direccion"]||"",
+    _status:null
+  };
+}
+
+let allData=RAW_DATA.map(normalizeRow);
+allData.forEach(d=>d._status=getWebStatus({["Web Actual"]:d.web}));
+let filtered=[...allData];
+let sortField="",sortDir=1;
+let map=null,markers=[];
+
+function renderStats(data){
+  document.getElementById("statTotal").textContent=data.length;
+  document.getElementById("statSinWeb").textContent=data.filter(d=>d._status==="sin").length;
+  document.getElementById("statRedes").textContent=data.filter(d=>d._status==="redes").length;
+  const rs=data.filter(d=>d.rating).map(d=>d.rating);
+  document.getElementById("statRating").textContent=rs.length?(rs.reduce((a,b)=>a+b,0)/rs.length).toFixed(1):"—";
+}
+
+function renderChart(data){
+  const counts={};
+  data.forEach(d=>{const c=d.category||"otros";counts[c]=(counts[c]||0)+1;});
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const max=sorted[0]?.[1]||1;
+  document.getElementById("categoryChart").innerHTML=sorted.map(([cat,count])=>{
+    const pct=(count/max*100).toFixed(1);
+    const color=getCatColor(cat);
+    return`<div class="bar-row"><div class="bar-label">${cat}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color};">${count>2?count:""}</div></div><div class="bar-count">${count}</div></div>`;
+  }).join("");
+}
+
+function renderTable(data){
+  document.getElementById("showCount").textContent=data.length;
+  const tbody=document.getElementById("tableBody");
+  if(!data.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="icon">🔍</div><p>Sin resultados</p></div></td></tr>`;return;}
+  tbody.innerHTML=data.map(row=>{
+    const color=getCatColor(row.category);
+    const rc=row.rating>=4?"#7fff6e":row.rating>=3?"#ffe06e":"#ff6e9f";
+    const wb=row._status==="sin"?`<span class="web-badge sin-web">✕ Sin web</span>`:`<span class="web-badge redes">◈ Solo redes</span>`;
+    const ph=row.phone&&row.phone!=="No disponible"?`<a class="phone-link" href="tel:${row.phone}">${row.phone}</a>`:`<span style="color:var(--muted)">—</span>`;
+    const rt=row.rating?`<div class="rating"><div class="rating-dot" style="background:${rc}"></div>${row.rating}</div>`:`<span style="color:var(--muted)">—</span>`;
+    return`<tr><td class="name">${row.name}</td><td><span class="cat-badge" style="background:${color}18;color:${color};border:1px solid ${color}30">${row.category}</span></td><td>${wb}</td><td>${ph}</td><td>${rt}</td><td class="address-cell" title="${row.address}">${row.address||"—"}</td></tr>`;
+  }).join("");
+}
+
+function applyFilters(){
+  const search=document.getElementById("searchBox").value.toLowerCase();
+  const cat=document.getElementById("filterCat").value;
+  const web=document.getElementById("filterWeb").value;
+  const sort=document.getElementById("sortBy").value;
+  let data=[...allData];
+  if(search)data=data.filter(d=>d.name.toLowerCase().includes(search)||d.address.toLowerCase().includes(search));
+  if(cat)data=data.filter(d=>d.category===cat);
+  if(web)data=data.filter(d=>d._status===web);
+  if(sort==="rating-desc")data.sort((a,b)=>(b.rating||0)-(a.rating||0));
+  else if(sort==="rating-asc")data.sort((a,b)=>(a.rating||0)-(b.rating||0));
+  else if(sort==="name-asc")data.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(sort==="name-desc")data.sort((a,b)=>b.name.localeCompare(a.name));
+  filtered=data;
+  renderTable(data);
+}
+
+function toggleSort(field){
+  if(sortField===field)sortDir*=-1;else{sortField=field;sortDir=1;}
+  document.getElementById("sortBy").value="";
+  let data=[...filtered];
+  data.sort((a,b)=>{
+    if(field==="rating")return((b.rating||0)-(a.rating||0))*sortDir;
+    return a.name.localeCompare(b.name)*sortDir;
+  });
+  renderTable(data);
+}
+
+function exportCSV(){
+  const headers=["Negocio","Categoría","Teléfono","Web Actual","Estado Web","Rating","Dirección"];
+  const rows=filtered.map(d=>[d.name,d.category,d.phone,d.web,d._status==="sin"?"Sin web":"Solo redes",d.rating||"N/A",d.address]);
+  const csv=[headers,...rows].map(r=>r.map(v=>`"${(v||"").toString().replace(/"/g,"\"\"")}"` ).join(",")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="prospectos_filtrado.csv";a.click();
+}
+
+function initMap(){
+  if(map)return;
+  map=L.map("map").setView([21.503,-104.894],13);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{attribution:"©OpenStreetMap ©CartoDB",maxZoom:19}).addTo(map);
+}
+
+async function geocodeAndPlot(data){
+  if(!map)return;
+  markers.forEach(m=>map.removeLayer(m));
+  markers=[];
+  const sample=data.slice(0,60);
+  for(const row of sample){
+    if(!row.address)continue;
+    try{
+      const q=encodeURIComponent(row.address);
+      const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`);
+      const json=await res.json();
+      if(json[0]){
+        const lat=parseFloat(json[0].lat),lng=parseFloat(json[0].lon);
+        const color=row._status==="sin"?"#ff6e9f":"#ffe06e";
+        const icon=L.divIcon({className:"",html:`<div style="width:12px;height:12px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 0 8px ${color}80"></div>`,iconSize:[12,12],iconAnchor:[6,6]});
+        const m=L.marker([lat,lng],{icon}).addTo(map)
+          .bindPopup(`<b style="font-family:sans-serif">${row.name}</b><br><small style="color:#888">${row.category}</small><br><small>${row.phone}</small>`);
+        markers.push(m);
+      }
+      await new Promise(r=>setTimeout(r,120));
+    }catch(e){}
+  }
+}
+
+// Init
+const cats=[...new Set(allData.map(d=>d.category).filter(Boolean))].sort();
+const sel=document.getElementById("filterCat");
+cats.forEach(c=>sel.innerHTML+=`<option value="${c}">${c}</option>`);
+
+renderStats(allData);
+renderChart(allData);
+renderTable(allData);
+
+initMap();
+geocodeAndPlot(allData);
+
+["searchBox","filterCat","filterWeb","sortBy"].forEach(id=>
+  document.getElementById(id).addEventListener("input",applyFilters)
+);
+document.getElementById("sortBy").addEventListener("change",applyFilters);
+
+document.getElementById("fileInput").addEventListener("change",e=>{
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const lines=ev.target.result.trim().split("\n");
+    const headers=lines[0].split(",").map(h=>h.trim().replace(/^"|"$/g,""));
+    const rows=lines.slice(1).map(line=>{
+      const vals=[];let cur="",inQ=false;
+      for(let i=0;i<line.length;i++){
+        if(line[i]==="\""){ inQ=!inQ;continue;}
+        if(line[i]===","&&!inQ){vals.push(cur);cur="";continue;}
+        cur+=line[i];
+      }
+      vals.push(cur);
+      const obj={};headers.forEach((h,i)=>obj[h]=(vals[i]||"").trim());
+      return obj;
+    });
+    allData=rows.map(normalizeRow);
+    allData.forEach(d=>d._status=getWebStatus({"Web Actual":d.web}));
+    const cats2=[...new Set(allData.map(d=>d.category).filter(Boolean))].sort();
+    const sel2=document.getElementById("filterCat");
+    sel2.innerHTML="<option value=\"\">Todas las categorías</option>";
+    cats2.forEach(c=>sel2.innerHTML+=`<option value="${c}">${c}</option>`);
+    renderStats(allData);renderChart(allData);applyFilters();geocodeAndPlot(allData);
+  };
+  reader.readAsText(file,"utf-8");
+});
+</script>
+</body>
+</html>
